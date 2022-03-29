@@ -38,6 +38,9 @@ jobs:
       - run:
           name: Commit
           command: |
-            git add _data _site
-            git commit -m "deploy new results"
+            git add _site
+            git commit -m "deploy new site version ${CIRCLE_SHA1}"
+            git push --force origin main:gh-pages
+            git add _data
+            git commit -m "deploy new dafault data version ${CIRCLE_SHA1}"
             git push origin main
