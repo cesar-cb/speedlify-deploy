@@ -1,0 +1,43 @@
+version: 2.1
+jobs:
+  build:
+    working_directory: ~/speedlify-circleci
+    docker:
+      - image: circleci/node:14-browsers
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-{{ checksum "yarn.lock" }}
+      - run:
+          name: Add git user
+          command: |
+            git config user.email "bot@circleci.com"
+            git config user.name "CircleCI Bot"
+      - run:
+          name: Install Dependencies
+          command: yarn install
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+      - run:
+          name: Build production
+          command: yarn build-production
+      - add_ssh_keys:
+          fingerprints:
+            - '21:db:d2:a3:02:84:d7:53:44:9d:d5:10:f3:2b:19:69'
+      - run:
+          name: Add known hosts
+          command: |
+            mkdir -p ~/.ssh
+            echo ${GITHUB_KNOWN_HOST} >> ~/.ssh/known_hosts
+      - run:
+          name: Commit
+          command: |
+            git add _data _site
+            git commit -m "deploy new results"
+            git push origin main
